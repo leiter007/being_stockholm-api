@@ -1,5 +1,8 @@
 RSpec.describe Api::V1::PostsController, type: :request do
-let(:headers) { { HTTP_ACCEPT: 'application/json' } }
+let(:user) { FactoryBot.create(:user) }
+let(:credentials) { user.create_new_auth_token }
+let(:headers) { { HTTP_ACCEPT: "application/json" }.merge!(credentials) }
+let(:not_headers) { {HTTP_ACCEPT: "application/json"} }
   
   describe "GET /api/v1/posts/id" do
     before do
@@ -14,9 +17,10 @@ let(:headers) { { HTTP_ACCEPT: 'application/json' } }
         category: 'work',
         longitude: 53.06,
         latitude: 18.03,
+        user_id: user.id
       }, 
       headers: headers
-      get "/api/v1/posts/"+"#{Post.last.id}", headers: headers
+      get "/api/v1/posts/#{Post.last.id}", headers: headers
     end
     
     it "returns a success response" do

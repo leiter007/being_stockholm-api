@@ -1,5 +1,8 @@
 RSpec.describe Api::V1::PostsController, type: :request do
-  let(:headers) { { HTTP_ACCEPT: 'application/json' } }
+  let(:user) { FactoryBot.create(:user) }
+  let(:credentials) { user.create_new_auth_token }
+  let(:headers) { { HTTP_ACCEPT: "application/json" }.merge!(credentials) }
+  let(:not_headers) { {HTTP_ACCEPT: "application/json"} }
 
   describe "POST /api/v1/posts" do
 
@@ -16,6 +19,7 @@ RSpec.describe Api::V1::PostsController, type: :request do
           category: 'work',
           longitude: 53.06,
           latitude: 18.03,
+          user_id: user.id
         }, 
         headers: headers
       end
@@ -33,7 +37,7 @@ RSpec.describe Api::V1::PostsController, type: :request do
     end
 
     describe "unsuccessfully" do
-      it "can not be created without all fields filled in" do
+      it "Post can not be created without all fields filled in" do
         post "/api/v1/posts", params: {
           image: {
             type: "image/png",
@@ -44,6 +48,7 @@ RSpec.describe Api::V1::PostsController, type: :request do
           category: 'work',
           longitude: 53.06,
           latitude: 18.03,
+          user_id: user.id
         },
         headers: headers
 
@@ -51,7 +56,7 @@ RSpec.describe Api::V1::PostsController, type: :request do
         expect(response.status).to eq 422
       end
 
-      it "can not be created if caption is more than 140 characters" do
+      it "Post can not be created if caption is more than 140 characters" do
 
         post "/api/v1/posts", params: {
           image: {
@@ -64,11 +69,18 @@ RSpec.describe Api::V1::PostsController, type: :request do
           category: 'work',
           longitude: 53.06,
           latitude: 18.03,
+          user_id: user.id
         },
         headers: headers
 
         expect(json_response['error']).to eq ["Caption is too long (maximum is 140 characters)"]
       end
+
+      it "Post can not be created if user is not logged in" do
+        post "/api/v1/posts", headers: not_headers
+        expect(json_response["errors"]).to eq ["You need to sign in or sign up before continuing."]
+      end
+
     end
   end
 end
